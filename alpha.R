@@ -94,13 +94,6 @@ which(is.na(temp))
 
 #switch.class<-lapply(switch.class, as.factor)
 
-temp$MoSold <- as.factor(temp$MoSold)
-temp$YrSold <- as.factor(temp$YrSold)
-temp$YearBuilt <- as.factor(temp$YearBuilt)
-temp$YearRemodAdd <- as.factor(temp$YearRemodAdd)
-temp$MSSubClass <- as.factor(temp$MSSubClass)
-temp$MasVnrType <- as.factor(temp$MasVnrType)
-
 #assign values to quality columns
 
 to.change <- c('None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
@@ -127,21 +120,18 @@ temp[ ,c('ExterQual', 'ExterCond', 'BsmtQual', 'BsmtCond', 'HeatingQC',
 
 ####### Data Engineering #######
 
-temp <- temp %>% mutate(
-  TotalBath = FullBath + HalfBath*0.5 + BsmtFullBath + BsmtHalfBath*0.5)
+temp <- temp %>% mutate(TotalBath = FullBath + 
+                          HalfBath*0.5 + BsmtFullBath + BsmtHalfBath*0.5)
 
-temp <- temp %>% mutate(
-  TotalSqFeet = GrLivArea + TotalBsmtSF)
+temp <- temp %>% mutate(TotalSqFeet = GrLivArea + TotalBsmtSF)
 
-temp <- temp %>% mutate(
-  TotalPorchSF = OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch)
+temp <- temp %>% mutate(TotalPorchSF = OpenPorchSF + 
+                          EnclosedPorch + X3SsnPorch + ScreenPorch)
 
-temp <- temp %>% mutate(
-  Remodel = ifelse((temp$YearBuilt) == (temp$YearRemodAdd), 0, 1))
+temp <- temp %>% mutate(Remodel = ifelse((temp$YearBuilt) == (temp$YearRemodAdd), 0, 1))
 temp$Remodel <- as.factor(temp$Remodel)
 
-temp <- temp %>% mutate(
-  IsNew = ifelse(as.numeric(temp$YrSold) == as.numeric(temp$YearBuilt), 1, 0))
+temp <- temp %>% mutate(IsNew = ifelse(as.numeric(temp$YrSold) == as.numeric(temp$YearBuilt), 1, 0))
 temp$IsNew <- as.factor(t$IsNew)
 
 ####### Visualisation #######
@@ -224,7 +214,7 @@ p.6 <- temp %>%
   geom_boxplot() +
   scale_y_continuous(labels = dollar) +
   labs(y = "Sale Price",
-       x = "Neighborhood") +
+       x = "Neighbourhood") +
   theme_bw()
 
 
@@ -287,6 +277,14 @@ temp %>%
   arrange(desc(count)) %>% 
   kable()
 
+#changing to factor
+
+temp$MoSold <- as.factor(temp$MoSold)
+temp$YrSold <- as.factor(temp$YrSold)
+temp$YearBuilt <- as.factor(temp$YearBuilt)
+temp$YearRemodAdd <- as.factor(temp$YearRemodAdd)
+temp$MSSubClass <- as.factor(temp$MSSubClass)
+temp$MasVnrType <- as.factor(temp$MasVnrType)
 
 ####### Data Analysis #######
 
