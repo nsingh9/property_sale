@@ -16,7 +16,9 @@ library(scales)
 library(Matrix)
 library(Rborist)
 library(gganimate)
+library(fastDummies)
 library(RColorBrewer)
+
 
 ####### Data Loading #######
 
@@ -326,7 +328,8 @@ a_train %>%
   kable()
 
 rm(replace.mode.val,replace.none.val, replace.zero.val, assign.val,
-   assign.val.df, a)
+   assign.val.df)
+
 
 #changing to factor
 
@@ -343,6 +346,11 @@ rm(replace.mode.val,replace.none.val, replace.zero.val, assign.val,
 #a_test$YearRemodAdd <- as.factor(a_test$YearRemodAdd)
 #a_test$MSSubClass <- as.factor(a_test$MSSubClass)
 #a_test$MasVnrType <- as.factor(a_test$MasVnrType)
+
+
+####### Converting factor variables into numeric #######
+
+#use fastDummy's dummy_col
 
 ####### sale price removal ####### 
 
