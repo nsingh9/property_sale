@@ -368,7 +368,7 @@ train_set <- a_train[vr]
 ####### ** Methods #######
 
 #will use thi control setup for all caret trian function
-control <-trainControl(method="cv", number=5)
+control <-trainControl(method = "cv", number = 5)
 
 grid_ridge <- expand.grid(alpha = 0, lambda = seq(0.001, 0.1, by = 0.0005))
 
