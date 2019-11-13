@@ -57,6 +57,8 @@ which(sapply(temp, is.factor))
 
 ##### to null id temp <- rbind(block_test, block_train) ####
 
+temp$Id <- NULL
+
 #also check our replace_na & coalesce
 
 na.col <- which(colSums(is.na(temp)) > 0)
@@ -174,7 +176,7 @@ temp$Remodel <- as.factor(temp$Remodel)
 temp <- temp %>% mutate(IsNew = ifelse(as.numeric(temp$YrSold) == as.numeric(temp$YearBuilt), 1, 0))
 temp$IsNew <- as.factor(temp$IsNew)
 
-####### Spliting Test and Train ####### 
+####### Spliting Test and Train for Visualisation ####### 
 
 a <- split.data.frame(temp, cumsum(1:nrow(temp) %in% (break.point[1]+1)))
 
@@ -328,35 +330,38 @@ a_train %>%
   kable()
 
 rm(replace.mode.val,replace.none.val, replace.zero.val, assign.val,
-   assign.val.df)
+   assign.val.df, a)
 
 
 #changing to factor
 
-#a_train$MoSold <- as.factor(a_train$MoSold)
-#a_train$YrSold <- as.factor(a_train$YrSold)
-#a_train$YearBuilt <- as.factor(a_train$YearBuilt)
-#a_train$YearRemodAdd <- as.factor(a_train$YearRemodAdd)
-#a_train$MSSubClass <- as.factor(a_train$MSSubClass)
-#a_train$MasVnrType <- as.factor(a_train$MasVnrType)
-
-#a_test$MoSold <- as.factor(a_test$MoSold)
-#a_test$YrSold <- as.factor(a_test$YrSold)
-#a_test$YearBuilt <- as.factor(a_test$YearBuilt)
-#a_test$YearRemodAdd <- as.factor(a_test$YearRemodAdd)
-#a_test$MSSubClass <- as.factor(a_test$MSSubClass)
-#a_test$MasVnrType <- as.factor(a_test$MasVnrType)
+temp$MoSold <- as.factor(temp$MoSold)
+temp$YrSold <- as.factor(temp$YrSold)
+temp$YearBuilt <- as.factor(temp$YearBuilt)
+temp$YearRemodAdd <- as.factor(temp$YearRemodAdd)
+temp$MSSubClass <- as.factor(temp$MSSubClass)
+temp$MasVnrType <- as.factor(temp$MasVnrType)
 
 
 ####### Converting factor variables into numeric #######
 
 #use fastDummy's dummy_col
 
-####### sale price removal ####### 
+dum_number <- dummy_cols(temp)
 
-a_train$SalePrice <- NULL
+####### Spliting Test and Train for model training ####### 
 
-vr <- which(sapply(temp, is.numeric))
+a <- split.data.frame(dum_number, cumsum(1:nrow(temp) %in% (break.point[1]+1)))
+
+a_train <- a[[1]]
+
+a_test <- a[[2]]
+
+####### Seperating numeric data set form factor data set for model training ####### 
+
+vr <- which(sapply(a_train, is.numeric))
+
+train_set <- a_train[vr]
 
 ####### Data Analysis #######
 
@@ -367,7 +372,7 @@ control <-trainControl(method="cv", number=5)
 
 grid_ridge <- expand.grid(alpha = 0, lambda = seq(0.001, 0.1, by = 0.0005))
 
-fit_ridge <- train(x = a_train[vr], 
+fit_ridge <- train(x = train_set, 
                y = sale_price, 
                method ='glmnet', 
                trControl = control, 
