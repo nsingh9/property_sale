@@ -1,5 +1,4 @@
-getwd()
-setwd("E:/Project/property_sale")
+#https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 
 #####
 
@@ -7,17 +6,18 @@ rm(list = ls())
 
 ####### Librarys #######
 
-library(tidyverse)
-library(e1071)
-library(caret)
-library(knitr)
-library(glmnet)
-library(scales)
-library(Matrix)
-library(Rborist)
-library(gganimate)
-library(fastDummies)
-library(RColorBrewer)
+if(!require(tidyverse)) install.packages("tidyverse")
+if(!require(e1071)) install.packages("e1071")
+if(!require(caret)) install.packages("caret")
+if(!require(knitr)) install.packages("knitr")
+if(!require(doSNOW)) install.packages("doSNOW")
+if(!require(glmnet)) install.packages("glmnet")
+if(!require(scales)) install.packages("scales")
+if(!require(Matrix)) install.packages("Matrix")
+if(!require(Rborist)) install.packages("Rborist")
+if(!require(gganimate)) install.packages("gganimate")
+if(!require(fastDummies)) install.packages("fastDummies")
+if(!require(RColorBrewer)) install.packages("RColorBrewer")
 
 
 ####### Data Loading #######
@@ -32,6 +32,8 @@ dim(block_test)
 break.point <- dim(block_train)
 
 sale_price <- block_train$SalePrice
+
+sale_price <- log(sale_price)
 
 block_train$SalePrice <- NULL
 
@@ -140,9 +142,9 @@ which(is.na(temp))
 
 to.change <- c('None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
 
-assign.val <- c('ExterQual', 'ExterCond', 'BsmtQual', 'BsmtCond', 
-                'HeatingQC', 'KitchenQual', 'FireplaceQu', 'GarageQual', 
-                'GarageCond', 'PoolQC')
+assign.val <- c("ExterQual", "ExterCond", "BsmtQual", "BsmtCond", 
+                "HeatingQC", "KitchenQual", "FireplaceQu", "GarageQual", 
+                "GarageCond", "PoolQC")
 
 assign.val <- select(temp, assign.val)
 
@@ -152,12 +154,12 @@ assign.val.df <- as.data.frame(
                   'Gd' = 4, 'Ex' = 5)
   }))
 
-temp[ ,c('ExterQual', 'ExterCond', 'BsmtQual', 'BsmtCond', 'HeatingQC', 
-         'KitchenQual', 'FireplaceQu', 'GarageQual', 'GarageCond', 
-         'PoolQC')] <- assign.val.df[ ,c('ExterQual', 'ExterCond', 'BsmtQual', 
-                                         'BsmtCond', 'HeatingQC', 'KitchenQual', 
-                                         'FireplaceQu', 'GarageQual', 
-                                         'GarageCond', 'PoolQC')]
+temp[ ,c("ExterQual", "ExterCond", "BsmtQual", "BsmtCond", "HeatingQC", 
+         "KitchenQual", "FireplaceQu", "GarageQual", "GarageCond", 
+         "PoolQC")] <- assign.val.df[ ,c("ExterQual", "ExterCond", "BsmtQual", 
+                                         "BsmtCond", "HeatingQC", "KitchenQual", 
+                                         "FireplaceQu", "GarageQual", 
+                                         "GarageCond", "PoolQC")]
 
 
 ####### Data Engineering #######
@@ -367,55 +369,78 @@ train_set <- a_train[vr]
 
 ####### ** Methods #######
 
+
+####### Ridge ####### 
+
 #will use thi control setup for all caret trian function
-control <-trainControl(method = "cv", number = 5)
+control <- trainControl(method = "cv", number = 5)
 
 grid_ridge <- expand.grid(alpha = 0, lambda = seq(0.001, 0.1, by = 0.0005))
 
 fit_ridge <- train(x = train_set, 
                y = sale_price, 
-               method ='glmnet', 
+               method = "glmnet", 
                trControl = control, 
                tuneGrid = grid_ridge)
 
-fit_ridge$bestune
-min(fit_ridge$bestune$RMSE)
+fit_ridge$bestTune
+min(fit_ridge$results$RMSE)
 
 ridge_predict <- predict(fit_ridge, a_test)
 
-rmse_1 <- min(fit_ridge$bestune$RMSE)
+rmse_1 <- min(fit_ridge$results$RMSE)
 
-rmse_results <- data.frame(method = "Ridge Regression", RMSE = rmse_1)
+rmse_results <- data.frame(method = "Ridge Regression", RMSE = rmse_1,
+                           stringsAsFactors = FALSE)
 
 
 ####### Lasso ####### 
 
 grid_lasso <- expand.grid(alpha = 1, lambda = seq(0.001, 0.1, by = 0.0005))
 
-fit_lasso <- train(x = a_train, 
+fit_lasso <- train(x = train_set, 
                y = sale_price, 
-               method ='glmnet', 
+               method = "glmnet", 
                trControl = control, 
                tuneGrid = grid_lasso)
 
-fit_lasso$bestune
-min(fit_lasso$bestune$RMSE)
+fit_lasso$bestTune
+min(fit_lasso$results$RMSE)
 
 lasso_predict <- predict(fit_lasso, a_test)
 
-rmse_2 <- min(fit_lasso$bestune$RMSE)
+rmse_2 <- min(fit_lasso$results$RMSE)
 
 bind_rows(rmse_results,
-          data.frame(method="Lasso Regression", RMSE = rmse_2 ))
+          data.frame(method="Lasso Regression", RMSE = rmse_2, 
+                     stringsAsFactors = FALSE))
 
 ####### xgboost #######
 
 grid_xgb <- expand.grid(number = 1000,
                         eta = c(0.1, 0.05, 0.01),
-                        max_depth = c(2, 3, 4, 5, 6),
-                        colsample_bytree=1,
-                        min_child_weight=c(1, 2, 3, 4 ,5),
-                        subsample=1,
+                        max_depth = c(6, 7, 8, 9),
+                        colsample_bytree = c(0.3, 0.4, 0.5),
+                        min_child_weight = c(1, 2, 3, 4 ,5),
+                        subsample = 1,
                         gamma = 0
 )
+
+cl <- makeCluster(4, type = "SOCK")
+
+registerDoSNOW(cl)
+
+fit_xgb <- train(x = train_set,
+                 y = sale_price,
+                 method = "xgbTree",
+                 trControl = control,
+                 tuneGrid = grid_xgb)
+
+stopCluster(cl)
+
+fit_xgb$bestTune
+
+
+
+
 
