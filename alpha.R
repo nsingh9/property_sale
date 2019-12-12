@@ -275,15 +275,16 @@ p.6 <- a_train %>%
 summary(a_train$MoSold)
 
 #bar plot for property sold everymonth
-p.7 <- a_train %>% 
-  ggplot(aes(x = (months = factor(a_train$MoSold, labels = month.abb[1:12])), 
-             fill = SalePrice)) + 
-  geom_bar() +
+p.7 <- a_train %>%
+  mutate(months = factor(a_train$MoSold, 
+                         labels = month.abb[1:12])) %>% 
+  group_by(months) %>% 
+  summarise(count = n(), average = mean(SalePrice)) %>% 
+  ggplot() +
+  geom_bar(aes(x = months, y = count, fill = average),
+           stat = "identity") +
   scale_y_continuous(labels = number) +
   #scale_x_date(date_format("%B")) +
-  scale_fill_brewer(aes(start = min(a_train$SalePrice), 
-                        end = max(a_train$SalePrice), 
-                        aesthetics = "fill")) +
   xlab("Month") +
   #scale_x_date(labels = date_format(a_train$MoSold)) +
   theme_bw()
@@ -294,6 +295,7 @@ a_train %>%
   arrange(desc(count, average))
 
 
+#graph for house style and price for "1Story", "2Story", "1.5Fin"
 a_train %>% 
   group_by(HouseStyle) %>% 
   summarise(count = n()) %>% 
@@ -305,7 +307,7 @@ first.map <- subset(a_train,
 second.map <- subset(a_train, 
                      a_train$HouseStyle %in% c("SLvl", "SFoyer", "1.5Unf", 
                                             "2.5Unf", "2.5Fin"))
-#graph for house style and price for "1Story", "2Story", "1.5Fin"
+
 p.8 <- first.map %>% 
   ggplot(aes(YearBuilt, SalePrice, colour = HouseStyle)) +
   geom_point() +
@@ -347,7 +349,7 @@ temp$MasVnrType <- as.factor(temp$MasVnrType)
 
 ####### Converting factor variables into numeric #######
 
-#use fastDummy's dummy_col
+#use fastDummy's dummy_col (because we can't use factor)
 
 dum_number <- dummy_cols(temp)
 
